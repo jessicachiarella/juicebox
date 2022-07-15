@@ -2,12 +2,12 @@ const { Client } = require("pg");
 const client = new Client("postgres://localhost:5432/juicebox-dev");
 
 async function getAllPosts() {
-  const { rows } = await client.query(
-    `SELECT id, username, name, location, active
-        FROM users;
+  const result = await client.query(
+    `SELECT id, 'authorId', title, content
+        FROM posts;
         `
   );
-  return rows;
+  return result;
 }
 
 async function getAllUsers() {
@@ -21,23 +21,22 @@ async function getAllUsers() {
 
 async function createPost({ authorId, title, content }) {
   try {
-    const { rows: [ user ] } = await client.query(
+    const result = await client.query(
       `
-      INSERT INTO users(username, password, name, location) 
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT (username) DO NOTHING
+      INSERT INTO posts('authorId', title, content) 
+      VALUES ($1, $2, $3)
       RETURNING *;
 `,
-      [username, password, name, location]
+      [authorId, title, content]
     );
 
-    return user;
+    return result
   } catch (error) {
     throw error;
   }
 }
 
-async function createUser(id, { title, content, active }) {
+async function createUser({ username, password, name, location }) {
   try {
     const { rows: [ user ] } = await client.query(
       `
@@ -65,15 +64,15 @@ async function updatePost(id, fields = {}) {
   }
 
   try {
-    const { rows: [ user ] } = await client.query(
+    const result = await client.query(
       `
-        UPDATE users
+        UPDATE posts
         SET ${setString}
         WHERE id=${id}
         RETURNING *;
         `, Object.values(fields));
 
-    return user;
+    return result;
   } catch (error) {
     throw error;
   }
@@ -109,6 +108,27 @@ async function getPostsByUser(userId) {
       SELECT * FROM posts
       WHERE "authorId"=${ userId }
     `)
+    return rows;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function getUserById(userId){
+  try {
+    const getUser = await getAllUsers();
+        const Bob = await client.query(`
+        SELECT id, username, name, location
+        FROM users
+        SELECT 'authorId', title, content
+        FROM posts;
+        `)
+        console.log(Bob, "!!!!!!!!!")
+    }
+
+  
+  catch(error){
+    console.error(error)
   }
 }
 
@@ -117,4 +137,9 @@ module.exports = {
   getAllUsers,
   createUser,
   updateUser,
+  getUserById,
+  getPostsByUser,
+  updatePost,
+  createPost,
+  getAllPosts,
 };
