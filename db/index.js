@@ -103,6 +103,15 @@ async function updateUser(id, fields = {}) {
   }
 }
 
+async function getPostsByUser(userId) {
+  try {
+    const { rows } = await client.query(`
+      SELECT * FROM posts
+      WHERE "authorId"=${ userId }
+    `)
+  }
+}
+
 module.exports = {
   client,
   getAllUsers,
