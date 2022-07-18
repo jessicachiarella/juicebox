@@ -2,12 +2,12 @@ const { Client } = require("pg");
 const client = new Client("postgres://localhost:5432/juicebox-dev");
 
 async function getAllPosts() {
-  const result = await client.query(
-    `SELECT id, 'authorId', title, content
+  const { rows } = await client.query(
+    `SELECT "authorId", title, content
         FROM posts;
         `
   );
-  return result;
+  return rows;
 }
 
 async function getAllUsers() {
@@ -23,7 +23,7 @@ async function createPost({ authorId, title, content }) {
   try {
     const result = await client.query(
       `
-      INSERT INTO posts('authorId', title, content) 
+      INSERT INTO posts("authorId", title, content) 
       VALUES ($1, $2, $3)
       RETURNING *;
 `,
@@ -64,15 +64,14 @@ async function updatePost(id, fields = {}) {
   }
 
   try {
-    const result = await client.query(
+    const { rows: [ post ] } = await client.query(
       `
         UPDATE posts
         SET ${setString}
         WHERE id=${id}
         RETURNING *;
         `, Object.values(fields));
-
-    return result;
+    return post;
   } catch (error) {
     throw error;
   }
@@ -95,7 +94,7 @@ async function updateUser(id, fields = {}) {
         WHERE id=${id}
         RETURNING *;
         `, Object.values(fields));
-
+        console.log(user, "1234567")
     return user;
   } catch (error) {
     throw error;
@@ -116,17 +115,22 @@ async function getPostsByUser(userId) {
 
 async function getUserById(userId){
   try {
-    const getUser = await getAllUsers();
-        const Bob = await client.query(`
+    const { rows: [ user ] } = await client.query(`
         SELECT id, username, name, location
         FROM users
-        SELECT 'authorId', title, content
-        FROM posts;
-        `)
-        console.log(Bob, "!!!!!!!!!")
+        WHERE id=${ userId }
+        `);
+
+    console.log(user, "789456123")
+    if (!user) {
+      return null
     }
 
-  
+    user.posts = await getPostsByUser(userId)
+
+    return user
+    }
+
   catch(error){
     console.error(error)
   }
