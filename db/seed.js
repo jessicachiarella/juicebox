@@ -8,6 +8,9 @@ const {
   updatePost,
   createPost,
   getAllPosts,
+  createTags,
+  getPostById,
+  createPostTag,
 } = require("./index");
 
 async function dropTables() {
@@ -15,6 +18,8 @@ async function dropTables() {
     console.log("Starting to drop tables...");
 
     await client.query(`
+        DROP TABLE IF EXISTS post_tags;
+        DROP TABLE IF EXISTS tags;
         DROP TABLE IF EXISTS posts;
         DROP TABLE IF EXISTS users;
         `);
@@ -43,7 +48,16 @@ async function createTables() {
                 title VARCHAR(255) NOT NULL,
                 content TEXT NOT NULL,
                 active BOOLEAN DEFAULT true
-            )    
+                );
+              CREATE TABLE tags(
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) UNIQUE NOT NULL
+              );
+              CREATE TABLE post_tags(
+                "postId" INTEGER REFERENCES posts(id),
+                "tagId" INTEGER REFERENCES tags(id),
+                 UNIQUE ("postId", "tagId")
+              )
             `);
     console.log("Finished building tables!");
   } catch (error) {
@@ -111,6 +125,43 @@ async function createInitialPosts() {
     }
   }
 
+  async function createInitialTags(){
+    try {
+      console.log("starting to create tags...")
+      const [happy, sad, inspo, catman] = await createTags([
+      '#happy',
+      '#worst-day-ever',
+      '#youcandoanything',
+      '#catmandoeverything'
+      ]);
+      console.log("after create tags")
+      const [postOne, postTwo, postThree] = await getAllPosts();
+      console.log("after get all posts")
+      await addTagsToPost(postOne.authorId, [happy, inspo]);
+      await addTagsToPost(postTwo.authorId, [sad, inspo]);
+      await addTagsToPost(postThree.authorId, [happy, catman, inspo]);
+      console.log("finished creating tags!")
+    } catch (error){
+      console.log("error creating tags!")
+      throw error;
+    }
+  }
+
+  async function addTagsToPost(postId, tagList){
+    console.log(postId, "00000000000000000000")
+    try {
+      const createPostTagPromises = tagList.map(
+        tag => createPostTag(postId, tag.id)
+      );
+
+      await Promise.all(createPostTagPromises);
+      return await getPostById(postId);
+    } catch (error){
+      throw error;
+    }
+
+  }
+
 async function rebuildDB() {
   try {
     client.connect();
@@ -119,6 +170,7 @@ async function rebuildDB() {
     await createTables();
     await createInitialUsers();
     await createInitialPosts();
+    await createInitialTags();
   } catch (error) {
     throw error;
   }

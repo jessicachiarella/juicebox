@@ -19,6 +19,18 @@ async function getAllUsers() {
   return rows;
 }
 
+async function createPostTag(postId, tagId){
+  try{
+    await client.query(`
+    INSERT INTO post_tags("postId", "tagId")
+    VALUES ($1, $2)
+    ON CONFLICT ("postId", "tagId") DO NOTHING;
+    `, [postId, tagId]);
+  } catch (error){
+    throw error;
+  }
+}
+
 async function createPost({ authorId, title, content }) {
   try {
     const result = await client.query(
@@ -35,6 +47,35 @@ async function createPost({ authorId, title, content }) {
     throw error;
   }
 }
+
+async function createTags(tagList){
+console.log(tagList, "!!!!!!!!!!JDJLDFKDLKF")
+  if (tagList.length === 0){
+    return;
+  }
+  const insertValues = tagList.map(
+    (_, index) => `$${index + 1}`).join('), (');
+  
+    const selectValues = tagList.map(
+      (_, index) => `$${index + 1}`).join(`, `);
+    console.log(selectValues, "")
+  try {
+      await client.query(`
+      INSERT INTO tags(name)
+      VALUES (${insertValues})
+      ON CONFLICT (name) DO NOTHING
+      `, tagList)
+
+      const {rows} = await client.query(`
+      SELECT * FROM tags
+      WHERE name
+      IN (${selectValues})`, tagList)
+      return rows
+  } catch (error) {
+    throw error;
+  }
+}
+
 
 async function createUser({ username, password, name, location }) {
   try {
@@ -113,6 +154,37 @@ async function getPostsByUser(userId) {
   }
 }
 
+async function getPostById(postId){
+try {
+  const { rows: [ post ] } = await client.query(`
+  SELECT *
+  FROM posts
+  WHERE id=$1
+  `, [postId]);
+  console.log (postId, "????????????????")
+  const { rows: tags } = await client.query(`
+  SELECT tags.*
+  FROM tags
+  JOIN post_tags ON tags.id = post_tags."tagId"
+  WHERE post_tags."tagId" = $1
+  `, [postId]);
+  const { rows: [ author ] } = await client.query(`
+  SELECT id, username, name, location
+  FROM users
+  WHERE id=$1
+  `, [post.authorId]);
+  post.tags = tags;
+  post.author = author;
+
+  delete post.authorId;
+
+  return post;
+} catch (error) {
+  throw error;
+}
+
+}
+
 async function getUserById(userId){
   try {
     const { rows: [ user ] } = await client.query(`
@@ -146,4 +218,7 @@ module.exports = {
   updatePost,
   createPost,
   getAllPosts,
+  createTags,
+  getPostById,
+  createPostTag,
 };
