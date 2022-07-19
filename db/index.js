@@ -28,6 +28,13 @@ async function getAllUsers() {
   return rows;
 }
 
+async function getAllTags(){
+  const { rows } = await client.query(
+    `SELECT * FROM tags;`
+  );
+  return rows;
+}
+
 async function createPostTag(postId, tagId) {
   try {
     await client.query(
@@ -316,4 +323,5 @@ module.exports = {
   createPostTag,
   addTagsToPost,
   getPostsByTagName,
+  getAllTags,
 };
