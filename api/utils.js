@@ -1,24 +1,18 @@
-
-
 function requireUser(req, res, next) {
-    try {
-        if (!req.user) {
-            console.log("hello world")
-            throw(
-                {
-                        name: "MissingUserError",
-                        message: "You must be logged in to perform this action"
-                      }
-            ) 
-        
-        }
-    
-        
-    } catch (error) {
-        console.log("inside utils")
-    next(error);
+  try {
+    if (!req.user) {
+      next({
+        name: "MissingUserError",
+        message: "You must be logged in to perform this action",
+      }) ;
+    } else {
+      next()
     }
-}
-  module.exports = {
-    requireUser
+  } catch (error) {
+    console.error(error)
   }
+}
+
+module.exports = {
+  requireUser,
+};
