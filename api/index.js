@@ -43,13 +43,14 @@ apiRouter.use((req, res, next) => {
     next();
 });
 
+const postsRouter = require('./posts');
+apiRouter.use('/posts', postsRouter);
+
+const tagsRouter = require('./tags');
+apiRouter.use('/tags', tagsRouter);
+
 const usersRouter = require('./users');
 apiRouter.use('/users', usersRouter);
-apiRouter.use((error, req, res, next) => {
-  res.send({
-    name: error.name,
-    message: error.message
-  });
-});
+
 
 module.exports = apiRouter;

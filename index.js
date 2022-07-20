@@ -4,25 +4,14 @@ const PORT = 3000;
 const express = require('express');
 const server = express();
 const apiRouter = require('./api');
-const apiPosts = require('./api/posts.js');
-const apiTags = require('./api/tags.js');
 const morgan = require('morgan');
+const { client } = require('./db');
+
 
 server.use(morgan('dev'));
 server.use(express.json());
-server.use('/api', apiRouter);
-server.use('/api/posts', apiPosts);
-server.use('/api/tags', apiTags);
 
-const { client } = require('./db');
-const usersRouter = require('./api/users');
-server.use('/api/users', usersRouter);
 client.connect();
-
-server.listen(PORT, () => {
-    console.log('The server is open on port', PORT)
-})
-
 
 server.use((req, res, next) => {
     console.log('<____Body Logger START____>');
@@ -32,6 +21,17 @@ server.use((req, res, next) => {
     next();
 })
 
-server.post('/api/users/register', () => {});
-server.post('/api/users/login', () => {});
-server.delete('/api/users/:id', () => {});
+server.use("/api", apiRouter)
+
+
+server.use((error, req, res, next) => {
+    console.log("hey, i'm in the error handler")
+    res.send({
+      name: error.name,
+      message: error.message
+    });
+  });
+
+  server.listen(PORT, () => {
+    console.log('The server is open on port', PORT)
+})
