@@ -82,8 +82,7 @@ usersRouter.post('/login', async (req, res, next) => {
     try {
       const { userId } = req.params;
       const user = await getUserById(userId);
-      console.log(user)
-      if(user.active && (user.id === userId)) {
+      if(user.active && (user.id == userId)) {
         const updatedUser = updateUser(userId, { active: false })
         
         res.send({ user: updatedUser })
@@ -107,7 +106,7 @@ usersRouter.post('/login', async (req, res, next) => {
     try {
       const { userId } = req.params;
       const user = await getUserById(userId);
-      if(!user.active && (user.id === userId)) {
+      if(!user.active && (user.id == userId)) {
         const updatedUser = updateUser(userId, { active: true })
         
         res.send({ user: updatedUser })
