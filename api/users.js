@@ -84,17 +84,42 @@ usersRouter.post('/login', async (req, res, next) => {
     try {
       const { userId } = req.params;
       const user = await getUserById(userId);
-      if(user && (user.id === userId)) {
+      console.log(user)
+      if(user.active && (user.id === userId)) {
         const updatedUser = updateUser(userId, { active: false })
         
         res.send({ user: updatedUser })
       } else {
-        next(user ? { 
+        next(user.active ? { 
           name: "UnauthorizedUserError",
           message: "You cannot delete a user which is not yours."
         } : {
           name: "UserAlreadyDeleted",
           message: "That user has already been deleted."
+        });
+      }
+
+  
+    } catch ({ name, message }) {
+      next({ name, message })
+    }
+  });
+
+  usersRouter.patch('/:userId', requireUser, async (req, res, next) => {
+    try {
+      const { userId } = req.params;
+      const user = await getUserById(userId);
+      if(!user.active && (user.id === userId)) {
+        const updatedUser = updateUser(userId, { active: true })
+        
+        res.send({ user: updatedUser })
+      } else {
+        next(!user.active ? { 
+          name: "UnauthorizedUserError",
+          message: "You cannot update a user which is not yours."
+        } : {
+          name: "UserAlreadyActivated",
+          message: "That user has already been activated."
         });
       }
 
