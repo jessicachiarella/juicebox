@@ -12,11 +12,15 @@ tagsRouter.get('/', async (req, res) => {
 });
 
 tagsRouter.get('/:tagName/posts', async (req, res, next) => {
-    console.log(req.params, "These are my req.params!!!")
     const { tagName } = req.params;
     try {
+        
         const posts = await getPostsByTagName(tagName);
-        res.send({ posts: [ posts ] })
+        const filteredPosts = posts.filter(post => {
+            return post.active || (req.user && post.author.id === req.user.id)
+        })
+
+        res.send(filteredPosts)
     } catch ({ name, message }) {
         next({ name, message });
     }

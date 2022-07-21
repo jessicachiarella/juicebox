@@ -25,7 +25,6 @@ server.use("/api", apiRouter)
 
 
 server.use((error, req, res, next) => {
-    console.log("hey, i'm in the error handler")
     res.send({
       name: error.name,
       message: error.message

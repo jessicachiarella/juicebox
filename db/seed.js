@@ -1,5 +1,3 @@
-// sudo service postgresql start
-
 const {
   client,
   getAllUsers,
@@ -9,9 +7,7 @@ const {
   updatePost,
   createPost,
   getAllPosts,
-  createTags,
   getPostById,
-  addTagsToPost,
   getPostsByTagName,
 } = require("./index");
 

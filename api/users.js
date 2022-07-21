@@ -1,11 +1,9 @@
 const express = require('express');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const { restart } = require('nodemon');
 const usersRouter = express.Router();
-const { getAllUsers, getUserByUsername, createUser } = require('../db');
-
-// curl http://localhost:3000/api/users/login -H "Content-Type: application/json" -X POST -d '{"username": "albert", "password": "bertie99"}' 
-
-// curl http://localhost:3000/api -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhbGJlcnQiLCJwYXNzd29yZCI6ImJlcnRpZTk5IiwibmFtZSI6Ik5ld25hbWUgU29nb29kIiwibG9jYXRpb24iOiJMZXN0ZXJ2aWxsZSwgS1kiLCJhY3RpdmUiOnRydWUsImlhdCI6MTY1ODI1Njk4OH0.H5d4P8MGgVS8M81wR7eemxIe3dje-SsqPJ4TNG7wtSc'
+const { getAllUsers, getUserByUsername, createUser, getUserById, updateUser } = require('../db');
+const { requireUser } = require('./utils');
 
 usersRouter.get('/', async (req, res) => {
 
@@ -18,8 +16,7 @@ usersRouter.get('/', async (req, res) => {
 
 usersRouter.post('/login', async (req, res, next) => {
     const { username, password } = req.body;
-
-    // request must have both
+    
     if (!username || !password) {
       next({
         name: "MissingCredentialsError",
@@ -29,8 +26,8 @@ usersRouter.post('/login', async (req, res, next) => {
   
     try {
       const user = await getUserByUsername(username);
+
       if (user && user.password == password) {
-        // create token & return to user
         const { JWT_SECRET } = process.env
         const token = jwt.sign(user, JWT_SECRET)
         res.send({ message: "you're logged in!", token: `${token}` });
@@ -41,13 +38,12 @@ usersRouter.post('/login', async (req, res, next) => {
         });
       }
     } catch(error) {
-      console.log(error);
       next(error);
     }
   });
 
   usersRouter.post('/register', async (req, res, next) => {
-    const { username, password, name, location } = req.body;
+    const { username, password, name, location} = req.body;
   
     try {
       const _user = await getUserByUsername(username);
@@ -80,6 +76,32 @@ usersRouter.post('/login', async (req, res, next) => {
     } catch ({ name, message }) {
       next({ name, message })
     } 
+  });
+
+// Not functioning properly - !!might!! work on later.
+
+  usersRouter.delete('/:userId', requireUser, async (req, res, next) => {
+    try {
+      const { userId } = req.params;
+      const user = await getUserById(userId);
+      if(user && (user.id === userId)) {
+        const updatedUser = updateUser(userId, { active: false })
+        
+        res.send({ user: updatedUser })
+      } else {
+        next(user ? { 
+          name: "UnauthorizedUserError",
+          message: "You cannot delete a user which is not yours."
+        } : {
+          name: "UserAlreadyDeleted",
+          message: "That user has already been deleted."
+        });
+      }
+
+  
+    } catch ({ name, message }) {
+      next({ name, message })
+    }
   });
 
 module.exports = usersRouter;
