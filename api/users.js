@@ -78,8 +78,6 @@ usersRouter.post('/login', async (req, res, next) => {
     } 
   });
 
-// Not functioning properly - !!might!! work on later.
-
   usersRouter.delete('/:userId', requireUser, async (req, res, next) => {
     try {
       const { userId } = req.params;
